@@ -1,42 +1,34 @@
 package org.jenkinsci.plugins.wso2oauth;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import hudson.Extension;
-import hudson.ProxyConfiguration;
 import hudson.Util;
 import hudson.model.AbstractProject;
 import hudson.model.Descriptor;
 import hudson.security.SecurityRealm;
+import hudson.tasks.Mailer;
 import hudson.util.FormValidation;
 import hudson.model.User;
 import jenkins.model.Jenkins;
+import jenkins.security.SecurityListener;
+import org.acegisecurity.Authentication;
+import org.acegisecurity.AuthenticationException;
+import org.acegisecurity.AuthenticationManager;
+import org.acegisecurity.BadCredentialsException;
 import org.acegisecurity.context.SecurityContextHolder;
-import org.apache.commons.httpclient.URIException;
+import org.acegisecurity.providers.UsernamePasswordAuthenticationToken;
 import org.apache.commons.lang.StringUtils;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpHost;
 import org.apache.http.NameValuePair;
-import org.apache.http.client.config.RequestConfig;
-import org.apache.http.client.entity.UrlEncodedFormEntity;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.methods.HttpUriRequest;
 import org.apache.http.client.utils.URLEncodedUtils;
-import org.apache.http.impl.client.CloseableHttpClient;
-import org.apache.http.impl.client.HttpClients;
 import org.apache.http.message.BasicNameValuePair;
-import org.apache.http.util.EntityUtils;
 import org.jfree.util.Log;
 import org.kohsuke.stapler.*;
 import org.springframework.security.web.util.UrlUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.net.MalformedURLException;
-import java.net.Proxy;
-import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
@@ -50,13 +42,13 @@ public class Wso2SecurityRealm extends SecurityRealm {
     public static final String DEFAULT_FINISH_LOGIN_URL = "securityRealm/finishLogin";
     private static final String REFERER_ATTRIBUTE = Wso2SecurityRealm.class.getName() + ".referer";
 
-    private String wso2WebUri;
+    private String wso2isWebUri;
     private String clientID;
     private String clientSecret;
 
     @DataBoundConstructor
-    public Wso2SecurityRealm(String wso2WebUri, String authorizeUrl, String clientID, String clientSecret) {
-        this.wso2WebUri =  Util.fixEmptyAndTrim(wso2WebUri);
+    public Wso2SecurityRealm(String wso2isWebUri, String authorizeUrl, String clientID, String clientSecret) {
+        this.wso2isWebUri =  Util.fixEmptyAndTrim(wso2isWebUri);
         this.clientID = clientID;
         this.clientSecret = clientSecret;
     }
@@ -66,13 +58,8 @@ public class Wso2SecurityRealm extends SecurityRealm {
         return DEFAULT_COMMENCE_LOGIN_URL;
     }
 
-    @Override
-    public SecurityComponents createSecurityComponents() {
-        return new SecurityComponents();
-    }
-
-    public String getWso2WebUri() {
-        return wso2WebUri;
+    public String getWso2isWebUri() {
+        return wso2isWebUri;
     }
 
     public String getClientID() {
@@ -127,8 +114,9 @@ public class Wso2SecurityRealm extends SecurityRealm {
         parameters.add(new BasicNameValuePair("redirect_uri", this.buildRedirectUrl(request)));
         parameters.add(new BasicNameValuePair("response_type", "code"));
         parameters.add(new BasicNameValuePair("client_id", clientID));
+        parameters.add(new BasicNameValuePair("scope", "openid"));
 
-        return new HttpRedirect(this.getWso2WebUri() + "/oauth2/authorize?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8));
+        return new HttpRedirect(this.getWso2isWebUri() + "/oauth2/authorize?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8));
     }
 
     /**
@@ -147,8 +135,19 @@ public class Wso2SecurityRealm extends SecurityRealm {
 
         if (StringUtils.isNotBlank(accessToken)) {
             // only set the access token if it exists.
-            Wso2AuthenticationToken auth = new Wso2AuthenticationToken(accessToken, this.getWso2WebUri());
+            Wso2AuthenticationToken auth = new Wso2AuthenticationToken(accessToken, this.getWso2isWebUri());
             SecurityContextHolder.getContext().setAuthentication(auth);
+
+            Wso2User wso2User = auth.getWso2User();
+            User user = User.current();
+            if (user != null) {
+                user.setFullName(wso2User.getName());
+                // Set email from wso2is only if empty
+                if (!user.getProperty(Mailer.UserProperty.class).hasExplicitlyConfiguredAddress()) {
+                    user.addProperty(new Mailer.UserProperty(wso2User.getEmail()));
+                }
+            }
+            SecurityListener.fireAuthenticated(new Wso2OAuthUserDetails(wso2User.getUsername(), auth.getAuthorities()));
         } else {
             Log.info("WSO2 did not return an access token.");
         }
@@ -163,63 +162,16 @@ public class Wso2SecurityRealm extends SecurityRealm {
     }
 
     private String getAccessToken(StaplerRequest request, String code) throws IOException {
-        HttpPost httpPost = new HttpPost(this.wso2WebUri + "/oauth2/token");
         List<NameValuePair> parameters = new ArrayList<NameValuePair>();
         parameters.add(new BasicNameValuePair("client_id", clientID));
         parameters.add(new BasicNameValuePair("client_secret", clientSecret));
         parameters.add(new BasicNameValuePair("code", code));
         parameters.add(new BasicNameValuePair("grant_type", "authorization_code"));
         parameters.add(new BasicNameValuePair("redirect_uri", this.buildRedirectUrl(request)));
-        httpPost.setEntity(new UrlEncodedFormEntity(parameters, StandardCharsets.UTF_8));
-
-        CloseableHttpClient httpclient = HttpClients.createDefault();
-        HttpHost proxy = getProxy(httpPost);
-        if (proxy != null) {
-            RequestConfig config = RequestConfig.custom()
-                    .setProxy(proxy)
-                    .build();
-            httpPost.setConfig(config);
-        }
-
-        org.apache.http.HttpResponse response = httpclient.execute(httpPost);
-
-        HttpEntity entity = response.getEntity();
-
-        String content = EntityUtils.toString(entity);
-
-        // When HttpClient instance is no longer needed,
-        // shut down the connection manager to ensure
-        // immediate deallocation of all system resources
-        httpclient.close();
-
+//        parameters.add(new BasicNameValuePair("scope", "openid"));
+        Wso2Client wso2Client = new Wso2Client();
+        String content = wso2Client.post(this.wso2isWebUri + "/oauth2/token", parameters);
         return extractToken(content);
-    }
-
-    /**
-     * Returns the proxy to be used when connecting to the given URI.
-     */
-    private HttpHost getProxy(HttpUriRequest method) throws URIException {
-        Jenkins jenkins = Jenkins.getInstance();
-        if (jenkins == null) {
-            return null; // defensive check
-        }
-        ProxyConfiguration proxy = jenkins.proxy;
-        if (proxy == null)
-        {
-            return null; // defensive check
-        }
-
-        Proxy p = proxy.createProxy(method.getURI().getHost());
-        switch (p.type()) {
-            case DIRECT:
-                return null; // no proxy
-            case HTTP:
-                InetSocketAddress sa = (InetSocketAddress) p.address();
-                return new HttpHost(sa.getHostName(), sa.getPort());
-            case SOCKS:
-            default:
-                return null; // not supported yet
-        }
     }
 
     private String extractToken(String content) {
@@ -237,6 +189,30 @@ public class Wso2SecurityRealm extends SecurityRealm {
             Log.error(e.getMessage(), e);
         }
         return access_token;
+    }
+
+    @Override
+    public SecurityComponents createSecurityComponents() {
+        return new SecurityComponents(new AuthenticationManager() {
+
+            @Override
+            public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+                if (authentication instanceof Wso2AuthenticationToken) {
+                    return authentication;
+                }
+                if (authentication instanceof UsernamePasswordAuthenticationToken) {
+                    try {
+                        UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) authentication;
+                        Wso2AuthenticationToken wso2AuthenticationToken = new Wso2AuthenticationToken(token.getCredentials().toString(), getWso2isWebUri());
+                        SecurityContextHolder.getContext().setAuthentication(wso2AuthenticationToken);
+                        return wso2AuthenticationToken;
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                throw new BadCredentialsException("Unexpected authentication type: " + authentication);
+            }
+        }, new Wso2UserDetailsService());
     }
 
 
