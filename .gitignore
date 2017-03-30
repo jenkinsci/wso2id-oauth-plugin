@@ -1,2 +1,9 @@
 wso2-oauth.iml
+/target
+/work
+/.settings
+/.classpath
+/.project
+/.idea
+
 
