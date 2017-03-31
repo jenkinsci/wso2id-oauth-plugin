@@ -9,16 +9,16 @@ import java.io.Serializable;
 /**
  * Created by jylzobei on 29/03/17.
  */
-public class Wso2AuthenticationToken extends AbstractAuthenticationToken implements Serializable {
+public class Wso2IdAuthenticationToken extends AbstractAuthenticationToken implements Serializable {
 
     private final String accessToken;
     private final String wso2WebUri;
-   private final Wso2User wso2User;
-    private final Wso2Client wso2Client;
+   private final Wso2IdUser wso2User;
+    private final Wso2IdClient wso2Client;
 
-    public Wso2AuthenticationToken(String accessToken, String wso2WebUri) throws IOException {
+    public Wso2IdAuthenticationToken(String accessToken, String wso2WebUri) throws IOException {
         super(new GrantedAuthority[] {});
-        this.wso2Client = new Wso2Client();
+        this.wso2Client = new Wso2IdClient();
         this.accessToken = accessToken;
         this.wso2WebUri = wso2WebUri;
         this.wso2User = this.getUserDetails();
@@ -35,11 +35,11 @@ public class Wso2AuthenticationToken extends AbstractAuthenticationToken impleme
         return this.wso2User.getName();
     }
 
-    public Wso2User getWso2User() {
+    public Wso2IdUser getWso2User() {
         return wso2User;
     }
 
-    private Wso2User getUserDetails() throws IOException {
+    private Wso2IdUser getUserDetails() throws IOException {
        return wso2Client.getUser(this.wso2WebUri + "/oauth2/userinfo?schema=openid", accessToken);
     }
 

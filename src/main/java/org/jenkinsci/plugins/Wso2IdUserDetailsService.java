@@ -11,18 +11,18 @@ import org.springframework.dao.DataRetrievalFailureException;
 /**
  * Created by jylzobei on 30/03/17.
  */
-public class Wso2UserDetailsService implements UserDetailsService {
+public class Wso2IdUserDetailsService implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException, DataAccessException {
-        Wso2AuthenticationToken authToken;
-        if (SecurityContextHolder.getContext().getAuthentication() instanceof Wso2AuthenticationToken) {
-            authToken = (Wso2AuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
+        Wso2IdAuthenticationToken authToken;
+        if (SecurityContextHolder.getContext().getAuthentication() instanceof Wso2IdAuthenticationToken) {
+            authToken = (Wso2IdAuthenticationToken) SecurityContextHolder.getContext().getAuthentication();
         } else {
             throw new UserMayOrMayNotExistException("Could not get auth token.");
         }
 
         try {
-            Wso2OAuthUserDetails userDetails = new Wso2OAuthUserDetails(username, authToken.getAuthorities());
+            Wso2IdOAuthUserDetails userDetails = new Wso2IdOAuthUserDetails(username, authToken.getAuthorities());
             if (userDetails == null) {
                 throw new UsernameNotFoundException("Unknown user: " + username);
             }

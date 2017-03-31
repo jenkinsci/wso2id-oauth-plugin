@@ -36,18 +36,18 @@ import java.util.List;
 /**
  * Created by jylzobei on 28/03/17.
  */
-public class Wso2SecurityRealm extends SecurityRealm {
+public class Wso2IdSecurityRealm extends SecurityRealm {
 
     public static final String DEFAULT_COMMENCE_LOGIN_URL = "securityRealm/commenceLogin";
     public static final String DEFAULT_FINISH_LOGIN_URL = "securityRealm/finishLogin";
-    private static final String REFERER_ATTRIBUTE = Wso2SecurityRealm.class.getName() + ".referer";
+    private static final String REFERER_ATTRIBUTE = Wso2IdSecurityRealm.class.getName() + ".referer";
 
     private String wso2idWebUri;
     private String clientID;
     private String clientSecret;
 
     @DataBoundConstructor
-    public Wso2SecurityRealm(String wso2idWebUri, String authorizeUrl, String clientID, String clientSecret) {
+    public Wso2IdSecurityRealm(String wso2idWebUri, String authorizeUrl, String clientID, String clientSecret) {
         this.wso2idWebUri =  Util.fixEmptyAndTrim(wso2idWebUri);
         this.clientID = clientID;
         this.clientSecret = clientSecret;
@@ -135,10 +135,10 @@ public class Wso2SecurityRealm extends SecurityRealm {
 
         if (StringUtils.isNotBlank(accessToken)) {
             // only set the access token if it exists.
-            Wso2AuthenticationToken auth = new Wso2AuthenticationToken(accessToken, this.getWso2idWebUri());
+            Wso2IdAuthenticationToken auth = new Wso2IdAuthenticationToken(accessToken, this.getWso2idWebUri());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
-            Wso2User wso2User = auth.getWso2User();
+            Wso2IdUser wso2User = auth.getWso2User();
             User user = User.current();
             if (user != null) {
                 user.setFullName(wso2User.getName());
@@ -147,7 +147,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
                     user.addProperty(new Mailer.UserProperty(wso2User.getEmail()));
                 }
             }
-            SecurityListener.fireAuthenticated(new Wso2OAuthUserDetails(wso2User.getUsername(), auth.getAuthorities()));
+            SecurityListener.fireAuthenticated(new Wso2IdOAuthUserDetails(wso2User.getUsername(), auth.getAuthorities()));
         } else {
             Log.info("WSO2 did not return an access token.");
         }
@@ -169,7 +169,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
         parameters.add(new BasicNameValuePair("grant_type", "authorization_code"));
         parameters.add(new BasicNameValuePair("redirect_uri", this.buildRedirectUrl(request)));
 //        parameters.add(new BasicNameValuePair("scope", "openid"));
-        Wso2Client wso2Client = new Wso2Client();
+        Wso2IdClient wso2Client = new Wso2IdClient();
         String content = wso2Client.post(this.wso2idWebUri + "/oauth2/token", parameters);
         return extractToken(content);
     }
@@ -197,13 +197,13 @@ public class Wso2SecurityRealm extends SecurityRealm {
 
             @Override
             public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-                if (authentication instanceof Wso2AuthenticationToken) {
+                if (authentication instanceof Wso2IdAuthenticationToken) {
                     return authentication;
                 }
                 if (authentication instanceof UsernamePasswordAuthenticationToken) {
                     try {
                         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) authentication;
-                        Wso2AuthenticationToken wso2AuthenticationToken = new Wso2AuthenticationToken(token.getCredentials().toString(), getWso2idWebUri());
+                        Wso2IdAuthenticationToken wso2AuthenticationToken = new Wso2IdAuthenticationToken(token.getCredentials().toString(), getWso2idWebUri());
                         SecurityContextHolder.getContext().setAuthentication(wso2AuthenticationToken);
                         return wso2AuthenticationToken;
                     } catch (IOException e) {
@@ -212,7 +212,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
                 }
                 throw new BadCredentialsException("Unexpected authentication type: " + authentication);
             }
-        }, new Wso2UserDetailsService());
+        }, new Wso2IdUserDetailsService());
     }
 
 
@@ -225,11 +225,11 @@ public class Wso2SecurityRealm extends SecurityRealm {
     }
 
     /**
-     * Descriptor for {@link Wso2SecurityRealm}. Used as a singleton.
+     * Descriptor for {@link Wso2IdSecurityRealm}. Used as a singleton.
      * The class is marked as public so that it can be accessed from views.
      *
      * <p>
-     * See {@code src/main/resources/hudson/plugins/hello_world/Wso2SecurityRealm/*.jelly}
+     * See {@code src/main/resources/hudson/plugins/hello_world/Wso2IdSecurityRealm/*.jelly}
      * for the actual HTML fragment for the configuration screen.
      */
     @Extension // This indicates to Jenkins that this is an implementation of an extension point.

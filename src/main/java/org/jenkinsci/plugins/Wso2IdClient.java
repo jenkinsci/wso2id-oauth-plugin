@@ -27,7 +27,7 @@ import java.util.List;
 /**
  * Created by jylzobei on 29/03/17.
  */
-public class Wso2Client {
+public class Wso2IdClient {
 
     public String post(String wso2WebUri, List<NameValuePair> parameters) throws IOException {
         HttpPost httpPost = new HttpPost(wso2WebUri);
@@ -54,7 +54,7 @@ public class Wso2Client {
         return content;
     }
 
-    public Wso2User getUser(String wso2WebUri, String access_token) throws IOException {
+    public Wso2IdUser getUser(String wso2WebUri, String access_token) throws IOException {
 
         HttpGet httpGet = new HttpGet(wso2WebUri);
         httpGet.addHeader("Authorization", "Bearer "+access_token);
@@ -74,7 +74,7 @@ public class Wso2Client {
 
     }
 
-    private Wso2User extractUser(String content){
+    private Wso2IdUser extractUser(String content){
         ObjectMapper mapper = new ObjectMapper();
         String email = "";
         String username = "";
@@ -97,7 +97,7 @@ public class Wso2Client {
         } catch (IOException e) {
             Log.error(e.getMessage(), e);
         }
-        return new Wso2User(username, name, email);
+        return new Wso2IdUser(username, name, email);
     }
 
     /**

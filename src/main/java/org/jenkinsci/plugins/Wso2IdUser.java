@@ -3,13 +3,13 @@ package org.jenkinsci.plugins;
 /**
  * Created by jylzobei on 29/03/17.
  */
-public class Wso2User {
+public class Wso2IdUser {
 
     private final String name;
     private final String email;
     private final String username;
 
-    public Wso2User(String username, String name, String email) {
+    public Wso2IdUser(String username, String name, String email) {
         this.username = username;
         this.name = name;
         this.email = email;
