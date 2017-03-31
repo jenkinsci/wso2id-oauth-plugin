@@ -83,15 +83,16 @@ public class Wso2IdClient {
             JsonNode node = mapper.readValue(content, JsonNode.class);
             JsonNode emailNode = node.get("email");
             JsonNode usernameNode = node.get("sub");
-            JsonNode nameNode = node.get("preferred_username");
+            JsonNode lastNameNode = node.get("family_name");
+            JsonNode firstNameNode = node.get("given_name");
             if(emailNode != null){
                 email = emailNode.asText();
             }
             if(usernameNode != null){
                 username = usernameNode.asText();
             }
-            if(nameNode != null){
-                name = nameNode.asText();
+            if(lastNameNode != null && firstNameNode != null){
+                name = firstNameNode.asText() + " " + lastNameNode.asText();
             }
 
         } catch (IOException e) {
