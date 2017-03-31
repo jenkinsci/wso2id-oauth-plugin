@@ -1,9 +1,10 @@
-wso2id-oauth-plugin.iml
-/target
-/work
-/.settings
-/.classpath
-/.project
-/.idea
+target
+work
+.classpath
+.project
+.settings
+*.iml
+.idea
+
 
 
