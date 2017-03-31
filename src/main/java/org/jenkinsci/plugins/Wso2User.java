@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.wso2oauth;
+package org.jenkinsci.plugins;
 
 /**
  * Created by jylzobei on 29/03/17.

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.wso2oauth;
+package org.jenkinsci.plugins;
 
 import hudson.security.UserMayOrMayNotExistException;
 import org.acegisecurity.context.SecurityContextHolder;

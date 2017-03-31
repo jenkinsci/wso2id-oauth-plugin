@@ -1,0 +1,20 @@
+<!--
+
+-->
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core" xmlns:st="jelly:stapler" xmlns:d="jelly:define" xmlns:l="/lib/layout" xmlns:t="/lib/hudson" xmlns:f="/lib/form">
+    <f:section title="Global WSO2 OAuth Settings" >
+        <f:entry title="WSO2 Identity Server URL"  field="wso2idWebUri" help="/plugin/wso2id-oauth/help/realm/wso2id-web-uri-help.html">
+            <f:textbox default="${descriptor.getWso2idWebUri()}" />
+        </f:entry>
+
+        <f:entry title="Client ID"  field="clientID" help="/plugin/wso2id-oauth/help/realm/client-id-help.html">
+            <f:textbox />
+        </f:entry>
+
+        <f:entry title="Client Secret" field="clientSecret" help="/plugin/wso2id-oauth/help/realm/client-secret-help.html">
+            <f:textbox />
+        </f:entry>
+
+    </f:section>
+</j:jelly>

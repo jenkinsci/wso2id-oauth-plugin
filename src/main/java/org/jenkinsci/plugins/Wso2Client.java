@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.wso2oauth;
+package org.jenkinsci.plugins;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;

@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.wso2oauth;
+package org.jenkinsci.plugins;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -42,13 +42,13 @@ public class Wso2SecurityRealm extends SecurityRealm {
     public static final String DEFAULT_FINISH_LOGIN_URL = "securityRealm/finishLogin";
     private static final String REFERER_ATTRIBUTE = Wso2SecurityRealm.class.getName() + ".referer";
 
-    private String wso2isWebUri;
+    private String wso2idWebUri;
     private String clientID;
     private String clientSecret;
 
     @DataBoundConstructor
-    public Wso2SecurityRealm(String wso2isWebUri, String authorizeUrl, String clientID, String clientSecret) {
-        this.wso2isWebUri =  Util.fixEmptyAndTrim(wso2isWebUri);
+    public Wso2SecurityRealm(String wso2idWebUri, String authorizeUrl, String clientID, String clientSecret) {
+        this.wso2idWebUri =  Util.fixEmptyAndTrim(wso2idWebUri);
         this.clientID = clientID;
         this.clientSecret = clientSecret;
     }
@@ -58,8 +58,8 @@ public class Wso2SecurityRealm extends SecurityRealm {
         return DEFAULT_COMMENCE_LOGIN_URL;
     }
 
-    public String getWso2isWebUri() {
-        return wso2isWebUri;
+    public String getWso2idWebUri() {
+        return wso2idWebUri;
     }
 
     public String getClientID() {
@@ -116,7 +116,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
         parameters.add(new BasicNameValuePair("client_id", clientID));
         parameters.add(new BasicNameValuePair("scope", "openid"));
 
-        return new HttpRedirect(this.getWso2isWebUri() + "/oauth2/authorize?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8));
+        return new HttpRedirect(this.getWso2idWebUri() + "/oauth2/authorize?" + URLEncodedUtils.format(parameters, StandardCharsets.UTF_8));
     }
 
     /**
@@ -135,7 +135,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
 
         if (StringUtils.isNotBlank(accessToken)) {
             // only set the access token if it exists.
-            Wso2AuthenticationToken auth = new Wso2AuthenticationToken(accessToken, this.getWso2isWebUri());
+            Wso2AuthenticationToken auth = new Wso2AuthenticationToken(accessToken, this.getWso2idWebUri());
             SecurityContextHolder.getContext().setAuthentication(auth);
 
             Wso2User wso2User = auth.getWso2User();
@@ -170,7 +170,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
         parameters.add(new BasicNameValuePair("redirect_uri", this.buildRedirectUrl(request)));
 //        parameters.add(new BasicNameValuePair("scope", "openid"));
         Wso2Client wso2Client = new Wso2Client();
-        String content = wso2Client.post(this.wso2isWebUri + "/oauth2/token", parameters);
+        String content = wso2Client.post(this.wso2idWebUri + "/oauth2/token", parameters);
         return extractToken(content);
     }
 
@@ -203,7 +203,7 @@ public class Wso2SecurityRealm extends SecurityRealm {
                 if (authentication instanceof UsernamePasswordAuthenticationToken) {
                     try {
                         UsernamePasswordAuthenticationToken token = (UsernamePasswordAuthenticationToken) authentication;
-                        Wso2AuthenticationToken wso2AuthenticationToken = new Wso2AuthenticationToken(token.getCredentials().toString(), getWso2isWebUri());
+                        Wso2AuthenticationToken wso2AuthenticationToken = new Wso2AuthenticationToken(token.getCredentials().toString(), getWso2idWebUri());
                         SecurityContextHolder.getContext().setAuthentication(wso2AuthenticationToken);
                         return wso2AuthenticationToken;
                     } catch (IOException e) {

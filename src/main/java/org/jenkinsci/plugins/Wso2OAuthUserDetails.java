@@ -1,4 +1,4 @@
-package org.jenkinsci.plugins.wso2oauth;
+package org.jenkinsci.plugins;
 
 import org.acegisecurity.GrantedAuthority;
 import org.acegisecurity.userdetails.User;
