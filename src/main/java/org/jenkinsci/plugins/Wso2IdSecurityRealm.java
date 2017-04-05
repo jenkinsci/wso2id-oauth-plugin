@@ -108,7 +108,6 @@ public class Wso2IdSecurityRealm extends SecurityRealm {
         request.getSession().setAttribute(REFERER_ATTRIBUTE, referer);
 
         // 2. Requesting authorization :
-        // http://doc.gitlab.com/ce/api/oauth2.html
 
         List<NameValuePair> parameters = new ArrayList<NameValuePair>();
         parameters.add(new BasicNameValuePair("redirect_uri", this.buildRedirectUrl(request)));
