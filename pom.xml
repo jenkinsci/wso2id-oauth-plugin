@@ -10,7 +10,7 @@
     <version>2.11</version>
     <relativePath/>
   </parent>
-  <artifactId>wso2-oauth</artifactId>
+  <artifactId>wso2id-oauth</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>hpi</packaging>
 
