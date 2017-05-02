@@ -76,7 +76,11 @@ public class Wso2IdSecurityRealm extends SecurityRealm {
      * @return Jenkins URL
      */
     public static String getJenkinsUrl() {
-        return Jenkins.getInstance().getRootUrl();
+        Jenkins jenkins = Jenkins.getInstance();
+        if(jenkins == null) {
+            return null;
+        }
+        return jenkins.getRootUrl();
     }
 
     /**

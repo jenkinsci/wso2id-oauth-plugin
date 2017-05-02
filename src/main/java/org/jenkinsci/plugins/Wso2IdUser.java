@@ -7,6 +7,7 @@ import java.io.Serializable;
  */
 public class Wso2IdUser implements Serializable {
 
+    private static final long serialVersionUID = -2965499083268052115L;
     private final String name;
     private final String email;
     private final String username;
