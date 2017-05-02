@@ -11,6 +11,7 @@ import java.io.Serializable;
  */
 public class Wso2IdAuthenticationToken extends AbstractAuthenticationToken implements Serializable {
 
+    private static final long serialVersionUID = -7802729398224230496L;
     private final String accessToken;
     private final String wso2WebUri;
     private final Wso2IdUser wso2User;
