@@ -22,12 +22,7 @@ public class Wso2IdUserDetailsService implements UserDetailsService {
         }
 
         try {
-            Wso2IdOAuthUserDetails userDetails = new Wso2IdOAuthUserDetails(username, authToken.getAuthorities());
-            if (userDetails == null) {
-                throw new UsernameNotFoundException("Unknown user: " + username);
-            }
-
-            return userDetails;
+            return new Wso2IdOAuthUserDetails(username, authToken.getAuthorities());
         } catch (Error e) {
             throw new DataRetrievalFailureException("loadUserByUsername (username=" + username + ")", e);
         }

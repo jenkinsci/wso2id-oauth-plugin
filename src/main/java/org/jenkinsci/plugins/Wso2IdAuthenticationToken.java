@@ -13,8 +13,8 @@ public class Wso2IdAuthenticationToken extends AbstractAuthenticationToken imple
 
     private final String accessToken;
     private final String wso2WebUri;
-   private final Wso2IdUser wso2User;
-    private final Wso2IdClient wso2Client;
+    private final Wso2IdUser wso2User;
+    private final transient Wso2IdClient wso2Client;
 
     public Wso2IdAuthenticationToken(String accessToken, String wso2WebUri) throws IOException {
         super(new GrantedAuthority[] {});

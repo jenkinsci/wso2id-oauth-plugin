@@ -1,9 +1,11 @@
 package org.jenkinsci.plugins;
 
+import java.io.Serializable;
+
 /**
  * Created by jylzobei on 29/03/17.
  */
-public class Wso2IdUser {
+public class Wso2IdUser implements Serializable {
 
     private final String name;
     private final String email;
